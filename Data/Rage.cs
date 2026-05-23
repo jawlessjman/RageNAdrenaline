@@ -2,23 +2,29 @@
 
 public static class Rage
 {
-    private static int _rageLevel = 0;
-    private static int _maxRageLevel = 10;
+    private static int _rageLevel = 100;
+    private static int _maxRageLevel = 100;
+    private static float _rageRegenRate = 1f;
     
     public static int GetRageLevel()
     {
         return _rageLevel;
     }
     
-    public static void AddRage()
+    public static float GetRageRegenRate()
     {
-        _rageLevel++;
+        return _rageRegenRate;
+    }
+    
+    public static void AddRage(float value = 1)
+    {
+        _rageLevel += (int)value;
         if (_rageLevel > _maxRageLevel) _rageLevel = _maxRageLevel;
     }
     
-    public static void RemoveRage()
+    public static void RemoveRage(float value = 1)
     {
-        _rageLevel--;
+        _rageLevel -= (int)value;
         if (_rageLevel < 0) _rageLevel = 0;
     }
     
