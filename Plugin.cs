@@ -31,23 +31,27 @@ public class Plugin : BaseUnityPlugin
     {
         { BarLocation.Hotbar, new BarData
         {
-            AnchorMinMax = new Vector2(0f, 1f), AnchorPivot = new Vector2(0f, 1f), AnchorPosition = new Vector2(67f, -225f)
+            AnchorMinMax = new Vector2(0f, 1f), AnchorPivot = new Vector2(0f, 1f), AnchorPosition = new Vector2(815f, -75f)
         } },
         { BarLocation.TopMiddle, new BarData
         {
-            AnchorMinMax = new Vector2(0.5f, 1f), AnchorPivot = new Vector2(0.5f, 1f), AnchorPosition = new Vector2(0f, -120f)
+            AnchorMinMax = new Vector2(0.5f, 1f), AnchorPivot = new Vector2(0.5f, 1f), AnchorPosition = new Vector2(0f, -100f)
         } },
         { BarLocation.Minimap, new BarData
         {
-            AnchorMinMax = new Vector2(1f, 1f), AnchorPivot = new Vector2(1f, 1f), AnchorPosition = new Vector2(-100f, -360f)
+            AnchorMinMax = new Vector2(1f, 1f), AnchorPivot = new Vector2(1f, 1f), AnchorPosition = new Vector2(-80f, -359f)
         } },
         { BarLocation.Normal, new BarData
         {
-            AnchorMinMax = new Vector2(0.5f, 0f), AnchorPivot = new Vector2(0.5f, 0f), AnchorPosition = new Vector2(0f, 220f)
+            AnchorMinMax = new Vector2(0.5f, 0f), AnchorPivot = new Vector2(0.5f, 0f), AnchorPosition = new Vector2(0f, 230f)
         } },
         { BarLocation.BottomRight, new BarData
         {
-            AnchorMinMax = new Vector2(1f, 0f), AnchorPivot = new Vector2(1f, 0f), AnchorPosition = new Vector2(-100f, 200f)
+            AnchorMinMax = new Vector2(1f, 0f), AnchorPivot = new Vector2(1f, 0f), AnchorPosition = new Vector2(-190f, 110f)
+        } },
+        { BarLocation.BottomLeft, new BarData
+        {
+            AnchorMinMax = new Vector2(0f, 0f), AnchorPivot = new Vector2(0f, 0f), AnchorPosition = new Vector2(190f, 110f)
         } },
     };
     
@@ -62,7 +66,6 @@ public class Plugin : BaseUnityPlugin
     private const float MaxMultiplier = 2f;
 
     private const float MaxBossRange = 100f;
-    
     
     // Power meters
     public static readonly PowerMeter RageMeter = new(0, 100, 35, GetStatusEffect.RageDuration);
@@ -96,6 +99,9 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<float> AdrenalineDamageBoost;
     public static ConfigEntry<float> AdrenalineDamageReduction;
     
+    private static ConfigEntry<bool> _showTutorial;
+    private static GameObject _tutorialPanel;
+    
     /// <summary>
     /// This method is called when the game starts.
     /// </summary>
@@ -128,6 +134,7 @@ public class Plugin : BaseUnityPlugin
         
         // Create the custom GUI bars for rage and adrenaline
         GUIManager.OnCustomGUIAvailable += AddCustomBars;
+        GUIManager.OnCustomGUIAvailable += ShowTutorialGUI;
         
         _harmony = new Harmony(ModGuid);
         _harmony.PatchAll();
@@ -216,6 +223,13 @@ public class Plugin : BaseUnityPlugin
             "AdrenalineDamageReduction",
             0.5f,
             new ConfigDescription("Reduces the damage taken when your Adrenaline bar is full (0.5 is 50% damage reduction)", new AcceptableValueRange<float>(0.01f, 5f))
+            );
+        
+        _showTutorial = Config.Bind(
+            "Tutorial",
+            "ShowTutorial",
+            true,
+            new ConfigDescription("Shows a tutorial when the plugin is first loaded")
             );
     }
     
@@ -306,13 +320,16 @@ public class Plugin : BaseUnityPlugin
         _guiBars.Clear();
         _barTexts.Clear();
         
+        RageMeter.SetPower(0);
         RageMeter.ResetValue();
+
+        AdrenalineMeter.SetPower(0);
         AdrenalineMeter.ResetValue();
         
         var barSize = new Vector2(220f, 50f);
         
         AddCustomBar("Adrenaline", AdrenalineMeter.GetValue(), AdrenalineMeter.GetMaxValue(), Color.green, _barLocationConfig.Value, Vector2.zero, barSize);
-        AddCustomBar("Rage", RageMeter.GetValue(), RageMeter.GetMaxValue(), Color.red, _barLocationConfig.Value, new Vector2(0f, 40f), barSize);
+        AddCustomBar("Rage", RageMeter.GetValue(), RageMeter.GetMaxValue(), Color.red, _barLocationConfig.Value, new Vector2(0f, 30f), barSize);
     }
     
     /// <summary>
@@ -322,13 +339,16 @@ public class Plugin : BaseUnityPlugin
     {
         if (Player.m_localPlayer == null) return;
         
+        // Update the power meters values
         AdrenalineMeter.AddPower();
         AdrenalineMeter.RemovePower();
         RageMeter.AddPower();
         RageMeter.RemovePower();
         
+        // Update the power meter visuals
         UpdateVisualBars();
         
+        // Handle inputs for the Adrenaline and Rage bars
         HandleInputs();
     }
     
@@ -348,10 +368,10 @@ public class Plugin : BaseUnityPlugin
         var closestDistance = float.MaxValue;
         var player = Player.m_localPlayer;
         if (player == null) return;
-        if (RageMeter.IsActive())
+        if (RageMeter.IsActive()) // If RageMeter is active
         {
-            RageMeter.SetShouldRegen(false);
-            RageMeter.SetShouldLose(true);
+            RageMeter.SetShouldRegen(false); // Stop regeneration on rage meter
+            RageMeter.SetShouldLose(true); // Make sure loss is active
             return;
         }
         
@@ -363,7 +383,7 @@ public class Plugin : BaseUnityPlugin
             var distance = Vector3.Distance(player.transform.position, character.transform.position);
             if (character.IsBoss()) // If the character is a boss
             {
-                AdrenalineMeter.SetShouldRegen(!(distance >= MaxBossRange));
+                AdrenalineMeter.SetShouldRegen(!(distance >= MaxBossRange)); // Set regeneration based on if a boss is in range
                 if (distance >= MaxBossRange)
                 {
                     AdrenalineMeter.ResetValue();
@@ -376,22 +396,22 @@ public class Plugin : BaseUnityPlugin
             }
         }
 
-        if (closestDistance > MaxEnemyDistance)
+        if (closestDistance > MaxEnemyDistance) // If there is no enemy in range
         {
-            _noEnemyTimer += Time.fixedDeltaTime;
-            RageMeter.SetShouldRegen(false);
+            _noEnemyTimer += Time.fixedDeltaTime; // Increase timer to deactivate RageMeter
+            RageMeter.SetShouldRegen(false); // Stop regeneration on rage meter
             if (!(_noEnemyTimer >= NoEnemyTimerThreshold)) return;
-            RageMeter.SetShouldLose(true);
+            RageMeter.SetShouldLose(true); // Start loss on rage meter
         }
-        else
+        else // If there is an enemy in range
         {
-            _noEnemyTimer = 0f;
-            var dist = Mathf.InverseLerp(MaxEnemyDistance, MinEnemyDistance, closestDistance);
+            _noEnemyTimer = 0f; // Reset timer
+            var dist = Mathf.InverseLerp(MaxEnemyDistance, MinEnemyDistance, closestDistance); // Calculate distance multiplier
             var mod = Mathf.Lerp(MinMultiplier, MaxMultiplier, dist);
         
-            RageMeter.SetShouldRegen(true);
-            RageMeter.SetShouldLose(false);
-            RageMeter.SetRegenRateMultiplier(mod);
+            RageMeter.SetRegenRateMultiplier(mod); // Set regeneration rate multiplier
+            RageMeter.SetShouldRegen(true); // Start regeneration on rage meter
+            RageMeter.SetShouldLose(false); // Stop loss on rage meter
         }
     }
     
@@ -403,11 +423,11 @@ public class Plugin : BaseUnityPlugin
         // Update the visual bars
         foreach (var guiBar in _guiBars.Where(guiBar => guiBar.Value != null))
         {
-            if (guiBar.Key.ToLower().Contains("adrenaline"))
+            if (guiBar.Key.ToLower().Contains("adrenaline")) // Update the Adrenaline bar
             {
                 guiBar.Value.SetValue(AdrenalineMeter.GetValue());
             }
-            if (guiBar.Key.ToLower().Contains("rage"))
+            if (guiBar.Key.ToLower().Contains("rage")) // Update the Rage bar
             {
                 guiBar.Value.SetValue(RageMeter.GetValue());
             }
@@ -416,11 +436,11 @@ public class Plugin : BaseUnityPlugin
         // Update the text values
         foreach (var barText in _barTexts)
         {
-            if (barText.Key.ToLower().Contains("adrenaline"))
+            if (barText.Key.ToLower().Contains("adrenaline")) // Update the Adrenaline text
             {
                 barText.Value.text = $"{AdrenalineMeter.GetValue():0}";
             }
-            if (barText.Key.ToLower().Contains("rage"))
+            if (barText.Key.ToLower().Contains("rage")) // Update the Rage text
             {
                 barText.Value.text = $"{RageMeter.GetValue():0}";
             }
@@ -442,22 +462,24 @@ public class Plugin : BaseUnityPlugin
         if (Hud.instance == null) return;
         if (GUIManager.CustomGUIFront == null) return;
         
+        // Create the custom panels for the bars
         var custom = new GameObject(barName, typeof(RectTransform));
         custom.transform.SetParent(GUIManager.CustomGUIFront.transform, false);
         
         var rect = custom.GetComponent<RectTransform>();
         
-        var barData = BarLocations[barLocation];
+        var data = BarLocations.TryGetValue(barLocation, out var barData);
+        if (!data) return;
         
         rect.anchorMin = barData.AnchorMinMax;
         rect.anchorMax = barData.AnchorMinMax;
         
-        // Temp pivot location
         rect.pivot = barData.AnchorPivot;
         
         rect.anchoredPosition = barData.AnchorPosition + anchorPositionOffset;
         rect.sizeDelta = sizeDelta;
         
+        // Create the border object for the bar
         var borderObj = new GameObject($"{barName}Border", typeof(RectTransform), typeof(Image));
         borderObj.transform.SetParent(custom.transform, false);
 
@@ -471,6 +493,7 @@ public class Plugin : BaseUnityPlugin
         borderImage.color = new Color(0f, 0f, 0f, 0.4f);
         borderImage.raycastTarget = false;
 
+        // Create the bar objects for the bar
         var slowObj = Instantiate(Hud.instance.m_adrenalineBarSlow.gameObject, custom.transform);
         var fastObj = Instantiate(Hud.instance.m_adrenalineBarFast.gameObject, custom.transform);
 
@@ -482,12 +505,15 @@ public class Plugin : BaseUnityPlugin
         
         fastBar.m_barImage.color = barColor;
         
+        // Set the bar's values.
+        // The slow bar is the gray bar that slowly drains as the fast bar drains
         slowBar.m_changeDelay = Hud.instance.m_adrenalineBarSlow.m_changeDelay;
         slowBar.m_smoothDrain = Hud.instance.m_adrenalineBarSlow.m_smoothDrain;
         slowBar.m_smoothFill = Hud.instance.m_adrenalineBarSlow.m_smoothFill;
         slowBar.m_smoothSpeed = Hud.instance.m_adrenalineBarSlow.m_smoothSpeed;
         slowBar.m_smoothValue = Hud.instance.m_adrenalineBarSlow.m_smoothValue;
         
+        // The fast bar is the main bar that drains and fills fast and is the main colour
         fastBar.m_changeDelay = Hud.instance.m_adrenalineBarFast.m_changeDelay;
         fastBar.m_smoothDrain = Hud.instance.m_adrenalineBarFast.m_smoothDrain;
         fastBar.m_smoothFill = Hud.instance.m_adrenalineBarFast.m_smoothFill;
@@ -496,31 +522,8 @@ public class Plugin : BaseUnityPlugin
         
         var slowRect = slowBar.GetComponent<RectTransform>();
         var fastRect = fastBar.GetComponent<RectTransform>();
-
-        slowBar.m_barImage.rectTransform.sizeDelta =
-            new Vector2(sizeDelta.x, slowBar.m_barImage.rectTransform.sizeDelta.y);
-        fastBar.m_barImage.rectTransform.sizeDelta = new Vector2(sizeDelta.x, fastBar.m_barImage.rectTransform.sizeDelta.y);
         
-        borderRect.sizeDelta = new Vector2(fastBar.m_barImage.rectTransform.sizeDelta.x * 1.05f, fastBar.m_barImage.rectTransform.sizeDelta.y * 1.5f);
-        
-        var textObj = new GameObject($"{barName}Text", typeof(RectTransform));
-        textObj.transform.SetParent(custom.transform, false);
-
-        var text = textObj.AddComponent<TextMeshProUGUI>();
-        text.text = $"{defaultValue:0}";
-        text.fontSize = 18;
-        text.alignment = TextAlignmentOptions.Center;
-        text.color = Color.white;
-        text.raycastTarget = false;
-        text.font = Hud.instance.m_hoverName.font;
-
-        var textRect = textObj.GetComponent<RectTransform>();
-        textRect.anchorMin = Vector2.zero;
-        textRect.anchorMax = Vector2.one;
-        textRect.pivot = new Vector2(0.5f, 0.5f);
-        textRect.anchoredPosition = Vector2.zero;
-        textRect.sizeDelta = Vector2.zero;
-
+        // Position the slow and fast bars
         slowRect.anchorMin = Vector2.zero;
         slowRect.anchorMax = Vector2.one;
         slowRect.pivot = new Vector2(0.5f, 0.5f);
@@ -533,24 +536,123 @@ public class Plugin : BaseUnityPlugin
         fastRect.anchoredPosition = Vector2.zero;
         fastRect.sizeDelta = Vector2.zero;
 
+        // Set the size of the bars
+        slowBar.m_barImage.rectTransform.sizeDelta =
+            new Vector2(sizeDelta.x, slowBar.m_barImage.rectTransform.sizeDelta.y);
+        fastBar.m_barImage.rectTransform.sizeDelta = new Vector2(sizeDelta.x, fastBar.m_barImage.rectTransform.sizeDelta.y);
+        
+        // Set the size of the black border
+        borderRect.sizeDelta = new Vector2(fastBar.m_barImage.rectTransform.sizeDelta.x * 1.05f, fastBar.m_barImage.rectTransform.sizeDelta.y * 1.5f);
+        
+        // Create the text object for the bar
+        var textObj = new GameObject($"{barName}Text", typeof(RectTransform));
+        textObj.transform.SetParent(custom.transform, false);
+
+        var text = textObj.AddComponent<TextMeshProUGUI>();
+        text.text = $"{defaultValue:0}";
+        text.fontSize = 18;
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = Color.white;
+        text.raycastTarget = false;
+        text.font = Hud.instance.m_hoverName.font;
+        
+        // Place the text object in the correct position
+        var textRect = textObj.GetComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.pivot = new Vector2(0.5f, 0.5f);
+        textRect.anchoredPosition = Vector2.zero;
+        textRect.sizeDelta = Vector2.zero;
+
+        // Make sure the bars are active
         slowBar.gameObject.SetActive(true);
         fastBar.gameObject.SetActive(true);
-
+    
+        // Set the default and max values for the bars
         slowBar.SetMaxValue(defaultMaxValue);
         fastBar.SetMaxValue(defaultMaxValue);
 
         slowBar.SetValue(defaultValue);
         fastBar.SetValue(defaultValue);
-
+    
+        
+        // Add the bars to the list of bars
         _guiBars.Add(barName + "slow", slowBar);
         _guiBars.Add(barName + "fast", fastBar);
         
         _barTexts.Add(barName, text);
+    }
+
+    private void ShowTutorialGUI() { 
+        if (!_showTutorial.Value) return; 
+        if (GUIManager.Instance == null) return; 
+        if (GUIManager.CustomGUIFront == null) return; 
+        _tutorialPanel = GUIManager.Instance.CreateWoodpanel( 
+            parent: GUIManager.CustomGUIFront.transform, 
+            anchorMin: new Vector2(0.5f, 0.5f), 
+            anchorMax: new Vector2(0.5f, 0.5f), 
+            position: new Vector2(0f, 0f), 
+            width: 850, 
+            height: 600, 
+            draggable: false 
+            ); 
         
-        Logger.LogInfo($"Slow source: {Hud.instance.m_adrenalineBarSlow}");
-        Logger.LogInfo($"Fast source: {Hud.instance.m_adrenalineBarFast}");
-        Logger.LogInfo($"Custom GUI Front: {GUIManager.CustomGUIFront}");
+        GUIManager.Instance.CreateText( 
+            text: "$tutorial_ragenadrenaline_title", 
+            parent: _tutorialPanel.transform, 
+            anchorMin: new Vector2(0.5f, 1f), 
+            anchorMax: new Vector2(0.5f, 1f), 
+            position: new Vector2(0f, -50f), 
+            font: GUIManager.Instance.AveriaSerifBold, 
+            fontSize: 30, 
+            color: GUIManager.Instance.ValheimOrange, 
+            outline: true, 
+            outlineColor: Color.black, 
+            width: 400f, 
+            height: 40f, 
+            addContentSizeFitter: false
+            ); 
         
-        Logger.LogInfo($"Added {barName} bar");
+        GUIManager.Instance.CreateText(
+            text: "$tutorial_ragenadrenaline_description",
+            parent: _tutorialPanel.transform, 
+            anchorMin: new Vector2(0.5f, 1f), 
+            anchorMax: new Vector2(0.5f, 1f),
+            position: new Vector2(0f, -250f), 
+            font: GUIManager.Instance.AveriaSerifBold, 
+            fontSize: 20, 
+            color: GUIManager.Instance.ValheimOrange,
+            outline: true, 
+            outlineColor: Color.black,
+            width: 600f,
+            height: 300f, 
+            addContentSizeFitter: false
+            ); 
+        
+        // Create the button object
+        var buttonObject = GUIManager.Instance.CreateButton( 
+            text: "$tutorial_ragenadrenaline_button", 
+            parent: _tutorialPanel.transform, 
+            anchorMin: new Vector2(0.5f, 0.5f),
+            anchorMax: new Vector2(0.5f, 0.5f), 
+            position: new Vector2(0, -250f), 
+            width: 250f, 
+            height: 60f
+            ); 
+        
+        buttonObject.SetActive(true); 
+        // Add a listener to the button to close the panel again
+        var button = buttonObject.GetComponent<Button>();
+        button.onClick.AddListener(FinishTutorial);
+        
+    }
+
+    private void FinishTutorial()
+    {
+        _showTutorial.Value = false;
+        Config.Save();
+        if (_tutorialPanel == null) return;
+        Destroy(_tutorialPanel);
+        _tutorialPanel = null;
     }
 }

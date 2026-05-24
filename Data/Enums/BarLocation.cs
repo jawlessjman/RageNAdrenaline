@@ -6,5 +6,6 @@ public enum BarLocation
     Hotbar,
     Minimap,
     BottomRight,
-    TopMiddle
+    TopMiddle,
+    BottomLeft
 }

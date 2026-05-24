@@ -5,5 +5,9 @@
   
   "adrenaline_effect": "Adrenaline",
   "adrenaline_start": "Adrenaline Starts Pumping Through Your Veins",
-  "adrenaline_tooltip": "Adrenaline Starts Pumping Through Your Veins. Your power has Greatly increased."
+  "adrenaline_tooltip": "Adrenaline Starts Pumping Through Your Veins. Your power has Greatly increased.",
+  
+  "tutorial_ragenadrenaline_title" : "RageNAdrenaline Info",
+  "tutorial_ragenadrenaline_description": "This is an introduction to the RageNAdrenaline mod. This mod adds meters for rage and adrenaline similar to the meters with the same name from the Calamity mod for Terraria. In the configuration for this mod you can set the position of the meters, damage boost, damage reduction, and the keys to press to activate them. The rage meter will increase as long as there are enemies nearby, and will decrease if there has not been an enemy nearby for 5 seconds. The adrenaline meter will only increase during boss fights, and will only drain if the boss fight is over, or you get hit. Using the ability will grant a status effect boosting your overall damage output.",
+  "tutorial_ragenadrenaline_button" : "I Understand"
 }

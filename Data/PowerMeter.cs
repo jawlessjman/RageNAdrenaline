@@ -69,7 +69,8 @@ public class PowerMeter
     /// <param name="maxValue">The maximum value of the power meter</param>
     /// <param name="timeToFull">The time it takes for the power meter to reach full capacity</param>
     /// <param name="duration">The duration of the power meter's effect</param>
-    public PowerMeter(float startValue, float maxValue, float timeToFull, float duration)
+    /// <param name="speedLose">If the power meter should lose power twice as fast</param>
+    public PowerMeter(float startValue, float maxValue, float timeToFull, float duration, bool speedLose = false)
     {
         _value = startValue;
         _maxValue = maxValue;
@@ -77,7 +78,7 @@ public class PowerMeter
         _baseRegenRate = maxValue / timeToFull;
         _regenRate = _baseRegenRate;
 
-        _lossRate = maxValue / duration;
+        _lossRate = maxValue / duration * (speedLose ? 2f : 1f);
     }
 
     /// <summary>
