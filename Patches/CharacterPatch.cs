@@ -34,11 +34,8 @@ public class CharacterPatch
         if (Plugin.AdrenalineMeter.HasMaxPower()) // If the adrenaline meter is max, then reduce the damage taken
         {
             hit.m_damage.m_damage *= Plugin.AdrenalineDamageReduction.Value;
-        }
-
-        if (Plugin.AdrenalineMeter.GetValue() > 0) // Play sound when getting hit
-        {
-            var sound = AssetHolder.GetAudioClip("AdrenalineMajorLoss");
+            
+            var sound = AssetHolder.GetAudioClip("AdrenalineMajorLoss"); // Play sound when getting hit
             if (sound != null)
             {
                 AudioSource.PlayClipAtPoint(sound, __instance.transform.position);

@@ -481,15 +481,18 @@ public class Plugin : BaseUnityPlugin
         var fastBar = fastObj.GetComponent<GuiBar>();
         
         fastBar.m_barImage.color = barColor;
-
-        slowBar.m_changeDelay = 0.1f;
-        slowBar.m_smoothDrain = true;
-        slowBar.m_smoothFill = true;
-        slowBar.m_smoothSpeed = 5f;
-        slowBar.m_smoothValue = 2f;
         
-        fastBar.m_smoothDrain = false;
-        fastBar.m_smoothFill = false;
+        slowBar.m_changeDelay = Hud.instance.m_adrenalineBarSlow.m_changeDelay;
+        slowBar.m_smoothDrain = Hud.instance.m_adrenalineBarSlow.m_smoothDrain;
+        slowBar.m_smoothFill = Hud.instance.m_adrenalineBarSlow.m_smoothFill;
+        slowBar.m_smoothSpeed = Hud.instance.m_adrenalineBarSlow.m_smoothSpeed;
+        slowBar.m_smoothValue = Hud.instance.m_adrenalineBarSlow.m_smoothValue;
+        
+        fastBar.m_changeDelay = Hud.instance.m_adrenalineBarFast.m_changeDelay;
+        fastBar.m_smoothDrain = Hud.instance.m_adrenalineBarFast.m_smoothDrain;
+        fastBar.m_smoothFill = Hud.instance.m_adrenalineBarFast.m_smoothFill;
+        fastBar.m_smoothSpeed = Hud.instance.m_adrenalineBarFast.m_smoothSpeed;
+        fastBar.m_smoothValue = Hud.instance.m_adrenalineBarFast.m_smoothValue;
         
         var slowRect = slowBar.GetComponent<RectTransform>();
         var fastRect = fastBar.GetComponent<RectTransform>();
