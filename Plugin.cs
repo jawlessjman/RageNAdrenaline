@@ -8,6 +8,7 @@ using BepInEx.Logging;
 using HarmonyLib;
 using Jotunn.Configs;
 using Jotunn.Managers;
+using Jotunn.Utils;
 using RageNAdrenaline.Data;
 using RageNAdrenaline.Data.Enums;
 using UnityEngine;
@@ -95,26 +96,24 @@ public class Plugin : BaseUnityPlugin
         // Plugin startup logic
         Logger = base.Logger;
         
+        RageMeter.ResetValue();
+        AdrenalineMeter.ResetValue();
+        
         BindConfig();
         
         AddInputs();
         
         // Load local translation for English
-        var assembly = Assembly.GetExecutingAssembly();
 
         const string resourceName = $"{ModName}.Assets.Translations.English.RageNAdrenaline.json";
-        
-        using var stream = assembly.GetManifestResourceStream(resourceName);
-
-        if (stream == null)
+        var englishLocalized = AssetUtils.LoadTextFromResources(resourceName);
+        if (string.IsNullOrEmpty(englishLocalized))
         {
-            Logger.LogError($"Resource: {resourceName} to load English translation file");
+            Logger.LogError($"Failed to load English translation file: {resourceName}");
         }
         else
         {
-            using var reader = new StreamReader(stream);
-            var json = reader.ReadToEnd();
-            LocalizationManager.Instance.GetLocalization().AddJsonFile("English", json);
+            LocalizationManager.Instance.GetLocalization().AddJsonFile("English", englishLocalized);
         }
         
         AssetHolder.LoadAssetBundle();
@@ -325,7 +324,6 @@ public class Plugin : BaseUnityPlugin
         {
             _noEnemyTimer += Time.fixedDeltaTime;
             RageMeter.SetShouldRegen(false);
-            RageMeter.ResetRegenRate();
             if (!(_noEnemyTimer >= NoEnemyTimerThreshold)) return;
             RageMeter.SetShouldLose(true);
         }
@@ -413,11 +411,11 @@ public class Plugin : BaseUnityPlugin
         
         fastBar.m_barImage.color = barColor;
 
-        slowBar.m_changeDelay = 0.1f;
+        slowBar.m_changeDelay = 0f;
         slowBar.m_smoothDrain = true;
         slowBar.m_smoothFill = true;
-        slowBar.m_smoothSpeed = 1f;
-        slowBar.m_smoothValue = 1f;
+        slowBar.m_smoothSpeed = 5f;
+        slowBar.m_smoothValue = 2f;
         
         fastBar.m_smoothDrain = false;
         fastBar.m_smoothFill = false;
