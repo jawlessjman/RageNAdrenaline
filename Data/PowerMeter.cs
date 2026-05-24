@@ -12,8 +12,6 @@ public class PowerMeter
     public AudioClip FullSound { get; set;}
     public AudioClip EndSound { get; set;}
 
-    private bool _speedLose;
-
     private readonly float _baseRegenRate;
     private float _regenRate;
 
@@ -61,8 +59,6 @@ public class PowerMeter
             AudioSource.PlayClipAtPoint(FullSound, Player.m_localPlayer.transform.position);
         }
     }
-    
-    public bool IsLosingFast() => _speedLose;
 
     public void ResetValue()
     {
@@ -70,7 +66,6 @@ public class PowerMeter
         _isActive = false;
         _shouldRegen = false;
         _shouldLose = true;
-        _speedLose = true;
         _playedFullSound = false;
         _regenRate = _baseRegenRate;
     }
@@ -79,7 +74,7 @@ public class PowerMeter
     {
         if (!_shouldLose) return;
 
-        _value -= _lossRate * Time.deltaTime + (_speedLose ? 0.5f : 0f);
+        _value -= _lossRate * Time.deltaTime;
         _value = Mathf.Clamp(_value, 0f, _maxValue);
 
         if (_value < _maxValue)
@@ -92,7 +87,6 @@ public class PowerMeter
         var wasActive = _isActive;
 
         _value = 0f;
-        _speedLose = false;
         _isActive = false;
         _shouldLose = false;
         _playedFullSound = false;
@@ -123,7 +117,6 @@ public class PowerMeter
 
     public void Activate()
     {
-        _speedLose = false;
         _isActive = true;
         _shouldRegen = false;
         _shouldLose = true;

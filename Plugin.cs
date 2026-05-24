@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Reflection;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
@@ -22,18 +20,12 @@ namespace RageNAdrenaline;
 public class Plugin : BaseUnityPlugin
 {
     internal new static ManualLogSource Logger;
-
-    // Position anchorMin & anchorMax      | Ideal pivot           | Explanation
-    // Top Left new Vector2(0f, 1f)        | new Vector2(0f, 1f)   | Origin at top-left; positive X goes right, negative Y goes down.
-    // Top Middle new Vector2(0.5f, 1f)    | new Vector2(0.5f, 1f) | Center-top of screen; perfectly centered horizontally.
-    // Top Right new Vector2(1f, 1f)       | new Vector2(1f, 1f)   | Top-right; negative X moves left, negative Y moves down.
-    // Middle Bottom new Vector2(0.5f, 0f) | new Vector2(0.5f, 0f) | Center-bottom (standard for health/stamina); positive Y moves up.
-    // Bottom Right new Vector2(1f, 0f)    | new Vector2(1f, 0f)   | Bottom-right corner; negative X moves left, positive Y moves up.
+    
     private static readonly Dictionary<BarLocation, BarData> BarLocations = new()
     {
         { BarLocation.Hotbar, new BarData
         {
-            AnchorMinMax = new Vector2(0f, 1f), AnchorPivot = new Vector2(0f, 1f), AnchorPosition = new Vector2(50f, -200f)
+            AnchorMinMax = new Vector2(0f, 1f), AnchorPivot = new Vector2(0f, 1f), AnchorPosition = new Vector2(67f, -225f)
         } },
         { BarLocation.TopMiddle, new BarData
         {
@@ -65,13 +57,13 @@ public class Plugin : BaseUnityPlugin
 
     private const float MaxBossRange = 200f;
 
-    public static PowerMeter RageMeter = new(0, 100, 40, GetStatusEffect.RageDuration);
-    public static PowerMeter AdrenalineMeter =  new(0, 100, 25, GetStatusEffect.AdrenalineDuration);
+    public static readonly PowerMeter RageMeter = new(0, 100, 40, GetStatusEffect.RageDuration);
+    public static readonly PowerMeter AdrenalineMeter =  new(0, 100, 25, GetStatusEffect.AdrenalineDuration);
 
     // Plugin Info
     private const string ModGuid = "jawlessjman.RageNAdrenaline";
     public const string ModName = "RageNAdrenaline";
-    public const string ModVersion = "1.0.0";
+    private const string ModVersion = "1.0.0";
     
     private readonly Dictionary<string, GuiBar> _guiBars = new();
     private readonly Dictionary<string, TextMeshProUGUI> _barTexts = new();
@@ -263,10 +255,13 @@ public class Plugin : BaseUnityPlugin
         _guiBars.Clear();
         _barTexts.Clear();
         
+        RageMeter.ResetValue();
+        AdrenalineMeter.ResetValue();
+        
         var barSize = new Vector2(220f, 50f);
         
         AddCustomBar("Adrenaline", AdrenalineMeter.GetValue(), AdrenalineMeter.GetMaxValue(), Color.green, _barLocationConfig.Value, Vector2.zero, barSize);
-        AddCustomBar("Rage", RageMeter.GetValue(), RageMeter.GetMaxValue(), Color.red, _barLocationConfig.Value, new Vector2(0f, 70f), barSize);
+        AddCustomBar("Rage", RageMeter.GetValue(), RageMeter.GetMaxValue(), Color.red, _barLocationConfig.Value, new Vector2(0f, 40f), barSize);
     }
 
     private void Update()
@@ -411,7 +406,7 @@ public class Plugin : BaseUnityPlugin
         
         fastBar.m_barImage.color = barColor;
 
-        slowBar.m_changeDelay = 0f;
+        slowBar.m_changeDelay = 0.1f;
         slowBar.m_smoothDrain = true;
         slowBar.m_smoothFill = true;
         slowBar.m_smoothSpeed = 5f;

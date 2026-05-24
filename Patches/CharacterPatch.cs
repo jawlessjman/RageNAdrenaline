@@ -59,6 +59,7 @@ public class CharacterPatch
     [HarmonyPatch(typeof(Character), nameof(Character.AddAdrenaline))]
     public static bool AddAdrenalinePreFix(Character __instance)
     {
+        Plugin.Logger.LogInfo("AddAdrenalinePreFix");
         return false;
     }
     

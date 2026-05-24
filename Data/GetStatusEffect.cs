@@ -8,10 +8,10 @@ namespace RageNAdrenaline.Data;
 public static class GetStatusEffect
 {
     private static bool _initialized;
-    
-    public static float RageDuration = 9f;
-    public static float AdrenalineDuration = 5f;
-    
+
+    public const float RageDuration = 9f;
+    public const float AdrenalineDuration = 5f;
+
     private static readonly Dictionary<string, CustomStatusEffect> StatusEffects = new();
 
     /// <summary>
@@ -50,11 +50,11 @@ public static class GetStatusEffect
         
         effect.name = "SE_" + seName;
         effect.m_name = $"${seName}_effect";
-        effect.m_startMessage = $"{seName}_start";
+        effect.m_startMessage = $"${seName}_start";
         effect.m_startMessageType = MessageHud.MessageType.Center;
         effect.m_ttl = duration;
         effect.m_icon = AssetHolder.GetSprite(seName) ?? Hud.instance.m_buildSnappingIcon;
-        effect.m_tooltip = $"{seName}_tooltip";
+        effect.m_tooltip = $"${seName}_tooltip";
 
         effect.m_percentigeDamageModifiers.Add(
             new HitData.DamageTypes
