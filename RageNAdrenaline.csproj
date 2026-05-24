@@ -44,11 +44,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <None Remove="Assets\Icons\adrenaline.png" />
-    <None Remove="Assets\Icons\rage.png" />
-    <None Remove="Assets\Translations\English\RageNAdrenaline.json" />
     <EmbeddedResource Include="Assets\Translations\English\RageNAdrenaline.json" />
-    <None Remove="Assets\Bundles\ragenadrenaline" />
     <EmbeddedResource Include="Assets\Bundles\ragenadrenaline" />
   </ItemGroup>
 </Project>

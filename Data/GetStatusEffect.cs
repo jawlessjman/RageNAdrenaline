@@ -5,13 +5,23 @@ using UnityEngine;
 
 namespace RageNAdrenaline.Data;
 
+/// <summary>
+/// Gets status effects from the game
+/// </summary>
 public static class GetStatusEffect
 {
+    /// <summary>
+    /// Whether the status effects have been initialized
+    /// </summary>
     private static bool _initialized;
 
+    // Duration of the status effects
     public const float RageDuration = 9f;
     public const float AdrenalineDuration = 5f;
-
+    
+    /// <summary>
+    /// All the status effects
+    /// </summary>
     private static readonly Dictionary<string, CustomStatusEffect> StatusEffects = new();
 
     /// <summary>
@@ -29,7 +39,10 @@ public static class GetStatusEffect
         
         return StatusEffects.TryGetValue(name, out var statusEffect) ? statusEffect.StatusEffect : null;
     }
-
+    
+    /// <summary>
+    /// Registers the status effects
+    /// </summary>
     public static void RegisterStatusEffects()
     {
         if (_initialized) return;
@@ -37,13 +50,19 @@ public static class GetStatusEffect
         
         StatusEffects.Clear();
         
-        CreateStatusEffects("rage", 0.35f, RageDuration);
-        CreateStatusEffects("adrenaline", 2.5f, AdrenalineDuration);
+        CreateStatusEffects("rage", Plugin.RageDamageBoost.Value, RageDuration);
+        CreateStatusEffects("adrenaline", Plugin.AdrenalineDamageBoost.Value, AdrenalineDuration);
         
         _initialized = true;
         Plugin.LoadPowerStatusEffects();
     }
     
+    /// <summary>
+    /// Creates a status effect
+    /// </summary>
+    /// <param name="seName">The name of the status effect</param>
+    /// <param name="damageBoost">The damage boost of the status effect</param>
+    /// <param name="duration">The duration of the status effect</param>
     private static void CreateStatusEffects(string seName, float damageBoost, float duration)
     {
         var effect = ScriptableObject.CreateInstance<SE_Stats>();

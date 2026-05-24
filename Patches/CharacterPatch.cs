@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace RageNAdrenaline.Patches;
 
+/// <summary>
+/// Patches for the character
+/// </summary>
 [HarmonyPatch]
 public class CharacterPatch
 {
@@ -27,18 +30,13 @@ public class CharacterPatch
             Plugin.Logger.LogInfo("No damage or negative damage");
             return;
         }
-        if (__instance.IsBlocking())
+
+        if (Plugin.AdrenalineMeter.HasMaxPower()) // If the adrenaline meter is max, then reduce the damage taken
         {
-            Plugin.Logger.LogInfo("Blocking");
-            return;
+            hit.m_damage.m_damage *= Plugin.AdrenalineDamageReduction.Value;
         }
 
-        if (Plugin.AdrenalineMeter.HasMaxPower()) // Remove half of the damage if the player has max adrenaline
-        {
-            hit.m_damage.m_damage *= 0.5f;
-        }
-
-        if (Plugin.AdrenalineMeter.GetValue() > 0)
+        if (Plugin.AdrenalineMeter.GetValue() > 0) // Play sound when getting hit
         {
             var sound = AssetHolder.GetAudioClip("AdrenalineMajorLoss");
             if (sound != null)
@@ -51,18 +49,9 @@ public class CharacterPatch
     }
     
     /// <summary>
-    /// Patch to prevent default adrenaline bar usage
+    /// Post fix for when the player or boss dies
     /// </summary>
     /// <param name="__instance"></param>
-    /// <returns></returns>
-    [HarmonyPrefix]
-    [HarmonyPatch(typeof(Character), nameof(Character.AddAdrenaline))]
-    public static bool AddAdrenalinePreFix(Character __instance)
-    {
-        Plugin.Logger.LogInfo("AddAdrenalinePreFix");
-        return false;
-    }
-    
     [HarmonyPostfix]
     [HarmonyPatch(typeof(Character), nameof(Character.OnDeath))]
     public static void OnDeathPostFix(Character __instance)
@@ -73,6 +62,7 @@ public class CharacterPatch
             return;
         }
         
+        // If player dies reset adrenaline and rage
         if (__instance == Player.m_localPlayer)
         {
             Plugin.AdrenalineMeter.ResetValue();
@@ -85,7 +75,7 @@ public class CharacterPatch
         }
         
         if (!__instance.IsBoss()) return;
-        
+        // If it's a boss reset adrenaline
         Plugin.AdrenalineMeter.ResetValue();   
         Plugin.AdrenalineMeter.SetShouldRegen(false);
     }

@@ -15,12 +15,18 @@ using TMPro;
 
 namespace RageNAdrenaline;
 
+/// <summary>
+/// Main plugin class
+/// </summary>
 [BepInPlugin(ModGuid, ModName, ModVersion)]
 [BepInDependency(Jotunn.Main.ModGuid)]
 public class Plugin : BaseUnityPlugin
 {
     internal new static ManualLogSource Logger;
     
+    /// <summary>
+    /// Locations for the Rage and Adrenaline meters
+    /// </summary>
     private static readonly Dictionary<BarLocation, BarData> BarLocations = new()
     {
         { BarLocation.Hotbar, new BarData
@@ -47,17 +53,19 @@ public class Plugin : BaseUnityPlugin
     
     // Rage Distance modifiers
     private const float MinEnemyDistance = 0.1f;
-    private const float MaxEnemyDistance = 50f;
+    private const float MaxEnemyDistance = 20f;
 
     private static float _noEnemyTimer;
-    private const float NoEnemyTimerThreshold = 10f;
+    private const float NoEnemyTimerThreshold = 5f;
 
     private const float MinMultiplier = 1f;
     private const float MaxMultiplier = 2f;
 
-    private const float MaxBossRange = 200f;
-
-    public static readonly PowerMeter RageMeter = new(0, 100, 40, GetStatusEffect.RageDuration);
+    private const float MaxBossRange = 100f;
+    
+    
+    // Power meters
+    public static readonly PowerMeter RageMeter = new(0, 100, 35, GetStatusEffect.RageDuration);
     public static readonly PowerMeter AdrenalineMeter =  new(0, 100, 25, GetStatusEffect.AdrenalineDuration);
 
     // Plugin Info
@@ -65,12 +73,13 @@ public class Plugin : BaseUnityPlugin
     public const string ModName = "RageNAdrenaline";
     private const string ModVersion = "1.0.0";
     
+    // Stored Bars
     private readonly Dictionary<string, GuiBar> _guiBars = new();
     private readonly Dictionary<string, TextMeshProUGUI> _barTexts = new();
     
     private Harmony _harmony;
     
-    //Button configs
+    // Button configs
     private static ButtonConfig _rageButtonConfig;
     private static ButtonConfig _adrenalineButtonConfig;
     
@@ -82,21 +91,24 @@ public class Plugin : BaseUnityPlugin
 
     private static ConfigEntry<KeyCode> _adrenalineKeyConfig;
     private static ConfigEntry<InputManager.GamepadButton> _adrenalineControllerConfig;
-        
+
+    public static ConfigEntry<float> RageDamageBoost;
+    public static ConfigEntry<float> AdrenalineDamageBoost;
+    public static ConfigEntry<float> AdrenalineDamageReduction;
+    
+    /// <summary>
+    /// This method is called when the game starts.
+    /// </summary>
     private void Awake()
     {
         // Plugin startup logic
         Logger = base.Logger;
-        
-        RageMeter.ResetValue();
-        AdrenalineMeter.ResetValue();
         
         BindConfig();
         
         AddInputs();
         
         // Load local translation for English
-
         const string resourceName = $"{ModName}.Assets.Translations.English.RageNAdrenaline.json";
         var englishLocalized = AssetUtils.LoadTextFromResources(resourceName);
         if (string.IsNullOrEmpty(englishLocalized))
@@ -108,10 +120,13 @@ public class Plugin : BaseUnityPlugin
             LocalizationManager.Instance.GetLocalization().AddJsonFile("English", englishLocalized);
         }
         
+        // Load Assets
         AssetHolder.LoadAssetBundle();
         
+        // Load status effects for adrenaline and rage
         ItemManager.OnItemsRegistered += GetStatusEffect.RegisterStatusEffects;
         
+        // Create the custom GUI bars for rage and adrenaline
         GUIManager.OnCustomGUIAvailable += AddCustomBars;
         
         _harmony = new Harmony(ModGuid);
@@ -120,6 +135,9 @@ public class Plugin : BaseUnityPlugin
         Logger.LogInfo($"Plugin {ModName}-{ModVersion} is loaded!");
     }
 
+    /// <summary>
+    /// Loads the status effects for adrenaline and rage
+    /// </summary>
     public static void LoadPowerStatusEffects()
     {
         var rageEffect = GetStatusEffect.GetPowerStatusEffect("rage");
@@ -139,6 +157,9 @@ public class Plugin : BaseUnityPlugin
         AdrenalineMeter.FullSound = AssetHolder.GetAudioClip("FullAdrenaline");
     }
     
+    /// <summary>
+    /// Binds the config options to the plugin
+    /// </summary>
     private void BindConfig()
     {
         _barLocationConfig = Config.Bind(
@@ -175,8 +196,32 @@ public class Plugin : BaseUnityPlugin
             InputManager.GamepadButton.DPadLeft,
             new ConfigDescription("Controller button for Rage bar activation")
             );
-    }
+        
+        RageDamageBoost = Config.Bind(
+            "Damage",
+            "RageDamageBoost",
+            1.35f,
+            new ConfigDescription("Boosts the damage dealt by Rage (1.35 is 135% damage)", new AcceptableValueRange<float>(0.01f, 5f))
+            );
 
+        AdrenalineDamageBoost = Config.Bind(
+            "Damage",
+            "AdrenalineDamageBoost",
+            2.5f,
+            new ConfigDescription("Boosts the damage dealt by Adrenaline (2.5 is 250% damage)", new AcceptableValueRange<float>(0.01f, 5f))
+            );
+        
+        AdrenalineDamageReduction = Config.Bind(
+            "Damage",
+            "AdrenalineDamageReduction",
+            0.5f,
+            new ConfigDescription("Reduces the damage taken when your Adrenaline bar is full (0.5 is 50% damage reduction)", new AcceptableValueRange<float>(0.01f, 5f))
+            );
+    }
+    
+    /// <summary>
+    /// Handles the inputs for the Adrenaline and Rage bars
+    /// </summary>
     private static void HandleInputs()
     {
         if (ZInput.instance == null) return;
@@ -224,7 +269,10 @@ public class Plugin : BaseUnityPlugin
             Player.m_localPlayer.m_seman.AddStatusEffect(AdrenalineMeter.StatusEffect);
         }
     }
-
+    
+    /// <summary>
+    /// Adds the inputs for the Adrenaline and Rage bars
+    /// </summary>
     private static void AddInputs()
     {
         _rageButtonConfig = new ButtonConfig()
@@ -249,7 +297,10 @@ public class Plugin : BaseUnityPlugin
         
         InputManager.Instance.AddButton(ModGuid, _adrenalineButtonConfig);
     }
-
+    
+    /// <summary>
+    /// Creates the custom GUI bars for the Adrenaline and Rage bars
+    /// </summary>
     private void AddCustomBars()
     {
         _guiBars.Clear();
@@ -263,7 +314,10 @@ public class Plugin : BaseUnityPlugin
         AddCustomBar("Adrenaline", AdrenalineMeter.GetValue(), AdrenalineMeter.GetMaxValue(), Color.green, _barLocationConfig.Value, Vector2.zero, barSize);
         AddCustomBar("Rage", RageMeter.GetValue(), RageMeter.GetMaxValue(), Color.red, _barLocationConfig.Value, new Vector2(0f, 40f), barSize);
     }
-
+    
+    /// <summary>
+    /// This is called every frame while the game is running.
+    /// </summary>
     private void Update()
     {
         if (Player.m_localPlayer == null) return;
@@ -277,12 +331,18 @@ public class Plugin : BaseUnityPlugin
         
         HandleInputs();
     }
-
+    
+    /// <summary>
+    /// This is called every fixed framerate frame if the MonoBehaviour is enabled.
+    /// </summary>
     private void FixedUpdate()
     {
         CheckNearbyEnemies();
     }
-
+    
+    /// <summary>
+    /// Checks for nearby enemies and manages RageMeter regeneration and loss based on distance.
+    /// </summary>
     private static void CheckNearbyEnemies()
     {
         var closestDistance = float.MaxValue;
@@ -295,12 +355,13 @@ public class Plugin : BaseUnityPlugin
             return;
         }
         
+        // Check for nearby enemies
         foreach (var character in from character in Character.GetAllCharacters() where character != null where character != player where !character.IsPlayer() where !character.IsDead() select character)
         {
-            if (!BaseAI.IsEnemy(player, character)) continue;
-            if (character.IsTamed()) continue;
+            if (!BaseAI.IsEnemy(player, character)) continue; // If the character does not have enemy AI
+            if (character.IsTamed()) continue; // If the character is tamed
             var distance = Vector3.Distance(player.transform.position, character.transform.position);
-            if (character.IsBoss())
+            if (character.IsBoss()) // If the character is a boss
             {
                 AdrenalineMeter.SetShouldRegen(!(distance >= MaxBossRange));
                 if (distance >= MaxBossRange)
@@ -309,7 +370,7 @@ public class Plugin : BaseUnityPlugin
                 }
             }
             
-            if (distance < closestDistance)
+            if (distance < closestDistance) // Get closest distance to enemy
             {
                 closestDistance = distance;
             }
@@ -333,9 +394,13 @@ public class Plugin : BaseUnityPlugin
             RageMeter.SetRegenRateMultiplier(mod);
         }
     }
-
+    
+    /// <summary>
+    /// Updates the visual bars for Adrenaline and Rage
+    /// </summary>
     private void UpdateVisualBars()
     {
+        // Update the visual bars
         foreach (var guiBar in _guiBars.Where(guiBar => guiBar.Value != null))
         {
             if (guiBar.Key.ToLower().Contains("adrenaline"))
@@ -348,6 +413,7 @@ public class Plugin : BaseUnityPlugin
             }
         }
         
+        // Update the text values
         foreach (var barText in _barTexts)
         {
             if (barText.Key.ToLower().Contains("adrenaline"))
@@ -360,7 +426,17 @@ public class Plugin : BaseUnityPlugin
             }
         }
     }
-
+    
+    /// <summary>
+    /// Creates a custom GUI bar for the Adrenaline and Rage bars
+    /// </summary>
+    /// <param name="barName">Name of the bar</param>
+    /// <param name="defaultValue">Starting value for the bar</param>
+    /// <param name="defaultMaxValue">Maximum value for the bar</param>
+    /// <param name="barColor">Color of the bar</param>
+    /// <param name="barLocation">Location of the bar on the HUD</param>
+    /// <param name="anchorPositionOffset">Offset for the bar's anchor position</param>
+    /// <param name="sizeDelta">Size delta for the bar's RectTransform</param>
     private void AddCustomBar(string barName, float defaultValue, float defaultMaxValue, Color barColor, BarLocation barLocation, Vector2 anchorPositionOffset, Vector2 sizeDelta)
     {
         if (Hud.instance == null) return;
