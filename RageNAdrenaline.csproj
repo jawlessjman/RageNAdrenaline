@@ -19,6 +19,7 @@
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Core" Version="5.*" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" />
+    <PackageReference Include="System.Memory" Version="4.5.5" />
     <PackageReference Include="UnityEngine.Modules" Version="6000.0.61.41133" IncludeAssets="compile" />
     <PackageReference Include="ValheimGameLibs" Version="0.221.4" />
   </ItemGroup>
@@ -34,8 +35,20 @@
     <Reference Include="Jotunn">
       <HintPath>D:\SteamLibrary\steamapps\common\Valheim\BepInEx\plugins\Jotunn.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>D:\SteamLibrary\steamapps\common\Valheim\Valheim_Data\Managed\Unity.TextMeshPro.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>D:\SteamLibrary\steamapps\common\Valheim\Valheim_Data\Managed\UnityEngine.UI.dll</HintPath>
     </Reference>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Remove="Assets\Icons\adrenaline.png" />
+    <None Remove="Assets\Icons\rage.png" />
+    <None Remove="Assets\Translations\English\RageNAdrenaline.json" />
+    <EmbeddedResource Include="Assets\Translations\English\RageNAdrenaline.json" />
+    <None Remove="Assets\Bundles\ragenadrenaline" />
+    <EmbeddedResource Include="Assets\Bundles\ragenadrenaline" />
   </ItemGroup>
 </Project>

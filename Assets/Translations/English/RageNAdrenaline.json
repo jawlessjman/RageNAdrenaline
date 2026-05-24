@@ -1,0 +1,9 @@
+{
+  "rage_effect": "Rage",
+  "rage_start": "You Feel The Rage Burning Inside You",
+  "rage_tooltip": "You feel the rage burning inside you. Your power has increased.",
+  
+  "adrenaline_effect": "Adrenaline",
+  "adrenaline_start": "Adrenaline Starts Pumping Through Your Veins",
+  "adrenaline_tooltip": "Adrenaline Starts Pumping Through Your Veins. Your power has Greatly increased."
+}
