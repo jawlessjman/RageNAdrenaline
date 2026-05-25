@@ -381,8 +381,6 @@ public class Plugin : BaseUnityPlugin
                 
                 _wasDead = true;
             }
-
-            return;
         }
 
         _wasDead = false;
@@ -390,7 +388,7 @@ public class Plugin : BaseUnityPlugin
         var currentHealth = Player.m_localPlayer.GetHealth();
         if (_lastHealth >= 0f && currentHealth < _lastHealth)
         {
-            AdrenalineMeter.ResetValue();
+            //AdrenalineMeter.ResetValue();
         }
         
         _lastHealth = currentHealth;
@@ -430,32 +428,24 @@ public class Plugin : BaseUnityPlugin
         var closestDistance = float.MaxValue;
         var hasBossInRange = false;
         var player = Player.m_localPlayer;
+        
+        var shouldAdrenalineRegen = false;
+        var shouldAdrenalineLose = false;
+        
         if (player == null) return;
-        if (AdrenalineMeter.IsActive())
-        {
-            AdrenalineMeter.SetShouldRegen(false);
-            AdrenalineMeter.SetShouldLose(true);
-        }
-        if (RageMeter.IsActive()) // If RageMeter is active
-        {
-            RageMeter.SetShouldRegen(false); // Stop regeneration on rage meter
-            RageMeter.SetShouldLose(true); // Make sure loss is active
-        }
         
         // Check for nearby enemies
         foreach (var character in from character in Character.GetAllCharacters() where character != null where character != player where !character.IsPlayer() where !character.IsDead() select character)
         {
             if (!BaseAI.IsEnemy(player, character)) continue; // If the character does not have enemy AI
             if (character.IsTamed()) continue; // If the character is tamed
+            
+            
             var distance = Vector3.Distance(player.transform.position, character.transform.position);
+
             if (character.IsBoss() && distance <= MaxBossRange) // If the character is a boss
             {
                 hasBossInRange = true;
-                if (!AdrenalineMeter.IsActive())
-                {
-                    AdrenalineMeter.SetShouldRegen(true); // Set regeneration based on if a boss is in range
-                    AdrenalineMeter.SetShouldLose(false);
-                }
             }
             
             if (distance < closestDistance) // Get closest distance to enemy
@@ -464,15 +454,26 @@ public class Plugin : BaseUnityPlugin
             }
         }
 
-        if (!hasBossInRange && !AdrenalineMeter.IsActive())
+        if (AdrenalineMeter.IsActive()) //if adrenaline is active
         {
-            AdrenalineMeter.ResetValue();
-            AdrenalineMeter.SetShouldRegen(false);
-            AdrenalineMeter.SetShouldLose(false);
+            shouldAdrenalineLose = true;
         }
+        else if (!hasBossInRange) // If there is no boss in range
+        {
+            shouldAdrenalineLose = true;
+        }
+        else // If there is a boss in range
+        {
+            if (!AdrenalineMeter.IsLosingPower()) // If adrenaline is not losing power
+            {
+                shouldAdrenalineRegen = true;
+            }
+        }
+        
+        AdrenalineMeter.SetShouldRegen(shouldAdrenalineRegen);
+        AdrenalineMeter.SetShouldLose(shouldAdrenalineLose);
 
         if (RageMeter.IsActive()) return;
-
         if (closestDistance > MaxEnemyDistance) // If there is no enemy in range
         {
             _noEnemyTimer += Time.fixedDeltaTime; // Increase timer to deactivate RageMeter

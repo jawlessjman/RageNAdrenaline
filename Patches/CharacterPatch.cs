@@ -24,11 +24,13 @@ public class CharacterPatch
         if (hit.GetTotalDamage() <= 0) return;
 
         if (__instance.m_nview == null || !__instance.m_nview.IsValid()) return;
-        var isAdrenalineActive = __instance.m_nview.GetZDO().GetBool("RageNAdrenaline_AdrenalineFull", false);
+        var isAdrenalineFull = __instance.m_nview.GetZDO().GetBool("RageNAdrenaline_AdrenalineFull", false);
 
-        if (!isAdrenalineActive) return;
+        if (!isAdrenalineFull) return;
         // Apply reduction safely on whatever machine runs this damage calculation
         hit.m_damage.m_damage *= Plugin.AdrenalineDamageReduction.Value;
+        
+        Plugin.Logger.LogInfo("Removing Adrenaline from " + __instance.name);
 
         // Play sound locally for everyone nearby
         var sound = AssetHolder.GetAudioClip("AdrenalineMajorLoss");
@@ -38,5 +40,6 @@ public class CharacterPatch
         }
         
         __instance.m_nview.InvokeRPC("RPC_ResetAdrenalineMeter");
+        Plugin.Logger.LogInfo("Resetting Adrenaline meter for " + __instance.name);
     }
 }

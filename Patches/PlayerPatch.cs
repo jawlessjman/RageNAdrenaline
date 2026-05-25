@@ -14,10 +14,16 @@ public class PlayerPatch
         
         __instance.m_nview.Register("RPC_ResetAdrenalineMeter", (sender) =>
         {
-            if (!__instance.IsOwner() || Plugin.AdrenalineMeter == null) return;
+            if (!__instance.IsOwner() || Plugin.AdrenalineMeter == null)
+            {
+                Plugin.Logger.LogWarning("RPC_ResetAdrenalineMeter was called by a non-owner or the Adrenaline meter is null");
+                return;
+            }
+            Plugin.Logger.LogInfo("Resetting Adrenaline meter for " + __instance.name);
             Plugin.AdrenalineMeter.ResetValue();
                 
             __instance.m_nview.GetZDO().Set("RageNAdrenaline_AdrenalineFull", false);
+            Plugin.Logger.LogInfo("Adrenaline meter reset for " + __instance.name);
         });
     }
 }

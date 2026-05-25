@@ -120,6 +120,8 @@ public class PowerMeter
             }
         }
     }
+    
+    public bool IsLosingPower() => _shouldLose;
 
     /// <summary>
     /// Resets the power meter to its starting values
@@ -135,6 +137,7 @@ public class PowerMeter
             Player.m_localPlayer.m_nview.GetZDO().Set("RageNAdrenaline_AdrenalineFull", false);
         }
         _regenRate = _baseRegenRate;
+        Plugin.Logger.LogInfo("Resetting power meter");
     }
 
     /// <summary>
