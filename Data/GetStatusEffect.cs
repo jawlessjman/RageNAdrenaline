@@ -39,6 +39,12 @@ public static class GetStatusEffect
         
         return StatusEffects.TryGetValue(name, out var statusEffect) ? statusEffect.StatusEffect : null;
     }
+
+    public static void ResetStatusEffects()
+    {
+        _initialized = false;
+        StatusEffects.Clear();
+    }
     
     /// <summary>
     /// Registers the status effects

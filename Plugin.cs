@@ -11,6 +11,7 @@ using RageNAdrenaline.Data;
 using RageNAdrenaline.Data.Enums;
 using UnityEngine;
 using UnityEngine.UI;
+using ServerSync;
 using TMPro;
 
 namespace RageNAdrenaline;
@@ -57,7 +58,7 @@ public class Plugin : BaseUnityPlugin
     
     // Rage Distance modifiers
     private const float MinEnemyDistance = 0.1f;
-    private const float MaxEnemyDistance = 20f;
+    private const float MaxEnemyDistance = 50f;
 
     private static float _noEnemyTimer;
     private const float NoEnemyTimerThreshold = 5f;
@@ -82,6 +83,10 @@ public class Plugin : BaseUnityPlugin
     
     private Harmony _harmony;
     
+    // Cached values
+    private static bool _wasDead;
+    private static float _lastHealth;
+    
     // Button configs
     private static ButtonConfig _rageButtonConfig;
     private static ButtonConfig _adrenalineButtonConfig;
@@ -98,6 +103,14 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<float> RageDamageBoost;
     public static ConfigEntry<float> AdrenalineDamageBoost;
     public static ConfigEntry<float> AdrenalineDamageReduction;
+
+    private static readonly ConfigSync ConfigSync = new(ModGuid)
+    {
+        DisplayName = ModName,
+        CurrentVersion = ModVersion,
+        MinimumRequiredVersion = ModVersion,
+        IsLocked = true
+    };
     
     private static ConfigEntry<bool> _showTutorial;
     private static GameObject _tutorialPanel;
@@ -111,8 +124,6 @@ public class Plugin : BaseUnityPlugin
         Logger = base.Logger;
         
         BindConfig();
-        
-        AddInputs();
         
         // Load local translation for English
         const string resourceName = $"{ModName}.Assets.Translations.English.RageNAdrenaline.json";
@@ -132,12 +143,28 @@ public class Plugin : BaseUnityPlugin
         // Load status effects for adrenaline and rage
         ItemManager.OnItemsRegistered += GetStatusEffect.RegisterStatusEffects;
         
-        // Create the custom GUI bars for rage and adrenaline
-        GUIManager.OnCustomGUIAvailable += AddCustomBars;
-        GUIManager.OnCustomGUIAvailable += ShowTutorialGUI;
+        SynchronizationManager.OnConfigurationSynchronized += (_, _) =>
+        {
+            Logger.LogInfo("Configuration synchronized with server.");
+            
+            GetStatusEffect.ResetStatusEffects();
+            GetStatusEffect.RegisterStatusEffects();
+        };
         
         _harmony = new Harmony(ModGuid);
         _harmony.PatchAll();
+
+        if (IsDedicatedServer())
+        {
+            Logger.LogInfo($"Plugin {ModName}-{ModVersion} is loaded on Server!");
+            return;
+        }
+        
+        AddInputs();
+        
+        // Create the custom GUI bars for rage and adrenaline
+        GUIManager.OnCustomGUIAvailable += AddCustomBars;
+        GUIManager.OnCustomGUIAvailable += ShowTutorialGUI;
         
         Logger.LogInfo($"Plugin {ModName}-{ModVersion} is loaded!");
     }
@@ -210,6 +237,7 @@ public class Plugin : BaseUnityPlugin
             1.35f,
             new ConfigDescription("Boosts the damage dealt by Rage (1.35 is 135% damage)", new AcceptableValueRange<float>(0.01f, 5f))
             );
+        ConfigSync.AddConfigEntry(RageDamageBoost).SynchronizedConfig = true;
 
         AdrenalineDamageBoost = Config.Bind(
             "Damage",
@@ -217,6 +245,7 @@ public class Plugin : BaseUnityPlugin
             2.5f,
             new ConfigDescription("Boosts the damage dealt by Adrenaline (2.5 is 250% damage)", new AcceptableValueRange<float>(0.01f, 5f))
             );
+        ConfigSync.AddConfigEntry(AdrenalineDamageBoost).SynchronizedConfig = true;
         
         AdrenalineDamageReduction = Config.Bind(
             "Damage",
@@ -224,6 +253,7 @@ public class Plugin : BaseUnityPlugin
             0.5f,
             new ConfigDescription("Reduces the damage taken when your Adrenaline bar is full (0.5 is 50% damage reduction)", new AcceptableValueRange<float>(0.01f, 5f))
             );
+        ConfigSync.AddConfigEntry(AdrenalineDamageReduction).SynchronizedConfig = true;
         
         _showTutorial = Config.Bind(
             "Tutorial",
@@ -337,7 +367,33 @@ public class Plugin : BaseUnityPlugin
     /// </summary>
     private void Update()
     {
+        if (IsDedicatedServer()) return;
         if (Player.m_localPlayer == null) return;
+
+        if (Player.m_localPlayer.IsDead())
+        {
+            if (!_wasDead)
+            {
+                AdrenalineMeter.SetPower(0);
+                RageMeter.SetPower(0);
+                AdrenalineMeter.ResetValue();
+                RageMeter.ResetValue();
+                
+                _wasDead = true;
+            }
+
+            return;
+        }
+
+        _wasDead = false;
+        
+        var currentHealth = Player.m_localPlayer.GetHealth();
+        if (_lastHealth >= 0f && currentHealth < _lastHealth)
+        {
+            AdrenalineMeter.ResetValue();
+        }
+        
+        _lastHealth = currentHealth;
         
         // Update the power meters values
         AdrenalineMeter.AddPower();
@@ -357,7 +413,13 @@ public class Plugin : BaseUnityPlugin
     /// </summary>
     private void FixedUpdate()
     {
+        if (IsDedicatedServer()) return;
         CheckNearbyEnemies();
+    }
+    
+    private static bool IsDedicatedServer()
+    {
+        return SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Null;
     }
     
     /// <summary>
@@ -366,13 +428,18 @@ public class Plugin : BaseUnityPlugin
     private static void CheckNearbyEnemies()
     {
         var closestDistance = float.MaxValue;
+        var hasBossInRange = false;
         var player = Player.m_localPlayer;
         if (player == null) return;
+        if (AdrenalineMeter.IsActive())
+        {
+            AdrenalineMeter.SetShouldRegen(false);
+            AdrenalineMeter.SetShouldLose(true);
+        }
         if (RageMeter.IsActive()) // If RageMeter is active
         {
             RageMeter.SetShouldRegen(false); // Stop regeneration on rage meter
             RageMeter.SetShouldLose(true); // Make sure loss is active
-            return;
         }
         
         // Check for nearby enemies
@@ -381,12 +448,13 @@ public class Plugin : BaseUnityPlugin
             if (!BaseAI.IsEnemy(player, character)) continue; // If the character does not have enemy AI
             if (character.IsTamed()) continue; // If the character is tamed
             var distance = Vector3.Distance(player.transform.position, character.transform.position);
-            if (character.IsBoss()) // If the character is a boss
+            if (character.IsBoss() && distance <= MaxBossRange) // If the character is a boss
             {
-                AdrenalineMeter.SetShouldRegen(!(distance >= MaxBossRange)); // Set regeneration based on if a boss is in range
-                if (distance >= MaxBossRange)
+                hasBossInRange = true;
+                if (!AdrenalineMeter.IsActive())
                 {
-                    AdrenalineMeter.ResetValue();
+                    AdrenalineMeter.SetShouldRegen(true); // Set regeneration based on if a boss is in range
+                    AdrenalineMeter.SetShouldLose(false);
                 }
             }
             
@@ -395,6 +463,15 @@ public class Plugin : BaseUnityPlugin
                 closestDistance = distance;
             }
         }
+
+        if (!hasBossInRange && !AdrenalineMeter.IsActive())
+        {
+            AdrenalineMeter.ResetValue();
+            AdrenalineMeter.SetShouldRegen(false);
+            AdrenalineMeter.SetShouldLose(false);
+        }
+
+        if (RageMeter.IsActive()) return;
 
         if (closestDistance > MaxEnemyDistance) // If there is no enemy in range
         {

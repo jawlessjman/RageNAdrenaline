@@ -114,6 +114,10 @@ public class PowerMeter
         if (FullSound != null)
         {
             AudioSource.PlayClipAtPoint(FullSound, Player.m_localPlayer.transform.position);
+            if (this == Plugin.AdrenalineMeter && Player.m_localPlayer != null)
+            {
+                Player.m_localPlayer.m_nview.GetZDO().Set("RageNAdrenaline_AdrenalineFull", true);
+            }
         }
     }
 
@@ -126,6 +130,10 @@ public class PowerMeter
         _shouldRegen = false;
         _shouldLose = true;
         _playedFullSound = false;
+        if (this == Plugin.AdrenalineMeter && Player.m_localPlayer != null)
+        {
+            Player.m_localPlayer.m_nview.GetZDO().Set("RageNAdrenaline_AdrenalineFull", false);
+        }
         _regenRate = _baseRegenRate;
     }
 
@@ -152,6 +160,11 @@ public class PowerMeter
         _isActive = false;
         _shouldLose = false;
         _playedFullSound = false;
+        
+        if (this == Plugin.AdrenalineMeter && Player.m_localPlayer != null)
+        {
+            Player.m_localPlayer.m_nview.GetZDO().Set("RageNAdrenaline_AdrenalineFull", false);
+        }
 
         if (wasActive && EndSound != null && Player.m_localPlayer != null)
         {
