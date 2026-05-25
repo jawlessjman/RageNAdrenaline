@@ -109,15 +109,13 @@ public class PowerMeter
         _value += _regenRate * Time.deltaTime;
         _value = Mathf.Clamp(_value, 0f, _maxValue);
 
-        if (!(_value >= _maxValue) || _playedFullSound) return;
+        if (!(_value >= _maxValue)) return;
+
+        if (_playedFullSound) return;
         _playedFullSound = true;
         if (FullSound != null)
         {
             AudioSource.PlayClipAtPoint(FullSound, Player.m_localPlayer.transform.position);
-            if (this == Plugin.AdrenalineMeter && Player.m_localPlayer != null)
-            {
-                Player.m_localPlayer.m_nview.GetZDO().Set("RageNAdrenaline_AdrenalineFull", true);
-            }
         }
     }
     
@@ -128,14 +126,11 @@ public class PowerMeter
     /// </summary>
     public void ResetValue()
     {
+        SetPower(0);
         _isActive = false;
         _shouldRegen = false;
         _shouldLose = true;
         _playedFullSound = false;
-        if (this == Plugin.AdrenalineMeter && Player.m_localPlayer != null)
-        {
-            Player.m_localPlayer.m_nview.GetZDO().Set("RageNAdrenaline_AdrenalineFull", false);
-        }
         _regenRate = _baseRegenRate;
         Plugin.Logger.LogInfo("Resetting power meter");
     }
@@ -163,11 +158,6 @@ public class PowerMeter
         _isActive = false;
         _shouldLose = false;
         _playedFullSound = false;
-        
-        if (this == Plugin.AdrenalineMeter && Player.m_localPlayer != null)
-        {
-            Player.m_localPlayer.m_nview.GetZDO().Set("RageNAdrenaline_AdrenalineFull", false);
-        }
 
         if (wasActive && EndSound != null && Player.m_localPlayer != null)
         {

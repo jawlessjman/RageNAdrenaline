@@ -85,7 +85,6 @@ public class Plugin : BaseUnityPlugin
     
     // Cached values
     private static bool _wasDead;
-    private static float _lastHealth;
     
     // Button configs
     private static ButtonConfig _rageButtonConfig;
@@ -104,7 +103,7 @@ public class Plugin : BaseUnityPlugin
     public static ConfigEntry<float> AdrenalineDamageBoost;
     public static ConfigEntry<float> AdrenalineDamageReduction;
 
-    private static readonly ConfigSync ConfigSync = new(ModGuid)
+    public static readonly ConfigSync ConfigSync = new(ModGuid)
     {
         DisplayName = ModName,
         CurrentVersion = ModVersion,
@@ -350,10 +349,7 @@ public class Plugin : BaseUnityPlugin
         _guiBars.Clear();
         _barTexts.Clear();
         
-        RageMeter.SetPower(0);
         RageMeter.ResetValue();
-
-        AdrenalineMeter.SetPower(0);
         AdrenalineMeter.ResetValue();
         
         var barSize = new Vector2(220f, 50f);
@@ -374,24 +370,14 @@ public class Plugin : BaseUnityPlugin
         {
             if (!_wasDead)
             {
-                AdrenalineMeter.SetPower(0);
-                RageMeter.SetPower(0);
                 AdrenalineMeter.ResetValue();
                 RageMeter.ResetValue();
                 
                 _wasDead = true;
             }
         }
-
+        
         _wasDead = false;
-        
-        var currentHealth = Player.m_localPlayer.GetHealth();
-        if (_lastHealth >= 0f && currentHealth < _lastHealth)
-        {
-            //AdrenalineMeter.ResetValue();
-        }
-        
-        _lastHealth = currentHealth;
         
         // Update the power meters values
         AdrenalineMeter.AddPower();
