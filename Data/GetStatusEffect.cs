@@ -58,7 +58,11 @@ public static class GetStatusEffect
         if (ObjectDB.instance == null) return;
 
         // Only register status effects if the config is the source of truth
-        if (!Plugin.ConfigSync.IsSourceOfTruth) return;
+        if (!Plugin.ConfigSync.IsSourceOfTruth)
+        {
+            _initialized = true;
+            return;
+        }
         
         StatusEffects.Clear();
         

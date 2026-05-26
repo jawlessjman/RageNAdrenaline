@@ -75,7 +75,7 @@ public class Plugin : BaseUnityPlugin
     // Plugin Info
     private const string ModGuid = "jawlessjman.RageNAdrenaline";
     public const string ModName = "RageNAdrenaline";
-    private const string ModVersion = "1.0.0";
+    private const string ModVersion = "1.1.0";
     
     // Stored Bars
     private readonly Dictionary<string, GuiBar> _guiBars = new();
@@ -107,7 +107,7 @@ public class Plugin : BaseUnityPlugin
     {
         DisplayName = ModName,
         CurrentVersion = ModVersion,
-        MinimumRequiredVersion = ModVersion,
+        MinimumRequiredVersion = "1.1.0",
         IsLocked = true
     };
     
@@ -517,7 +517,7 @@ public class Plugin : BaseUnityPlugin
     /// <param name="barName">Name of the bar</param>
     /// <param name="defaultValue">Starting value for the bar</param>
     /// <param name="defaultMaxValue">Maximum value for the bar</param>
-    /// <param name="barColor">Color of the bar</param>
+    /// <param name="barColor">Colour of the bar</param>
     /// <param name="barLocation">Location of the bar on the HUD</param>
     /// <param name="anchorPositionOffset">Offset for the bar's anchor position</param>
     /// <param name="sizeDelta">Size delta for the bar's RectTransform</param>
@@ -570,7 +570,7 @@ public class Plugin : BaseUnityPlugin
         fastBar.m_barImage.color = barColor;
         
         // Set the bar's values.
-        // The slow bar is the gray bar that slowly drains as the fast bar drains
+        // The slow bar is the grey bar that slowly drains as the fast bar drains
         slowBar.m_changeDelay = Hud.instance.m_adrenalineBarSlow.m_changeDelay;
         slowBar.m_smoothDrain = Hud.instance.m_adrenalineBarSlow.m_smoothDrain;
         slowBar.m_smoothFill = Hud.instance.m_adrenalineBarSlow.m_smoothFill;
