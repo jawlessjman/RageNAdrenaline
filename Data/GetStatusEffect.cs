@@ -31,13 +31,22 @@ public static class GetStatusEffect
     /// <returns></returns>
     public static StatusEffect GetPowerStatusEffect(string name)
     {
-        if (!_initialized) return null;
-        if (StatusEffects.Count == 0) return null;
-        if (ObjectDB.instance == null) return null;
         if (string.IsNullOrEmpty(name)) return null;
+        if (ObjectDB.instance == null) return null;
         if (ObjectDB.instance.m_StatusEffects == null) return null;
+        if (StatusEffects.Count == 0)
+        {
+            var seName = "SE_" + name;
+            return ObjectDB.instance.GetStatusEffect(seName.GetStableHashCode());
+        }
         
         return StatusEffects.TryGetValue(name, out var statusEffect) ? statusEffect.StatusEffect : null;
+    }
+
+    public static void ResetStatusEffects()
+    {
+        _initialized = false;
+        StatusEffects.Clear();
     }
     
     /// <summary>
@@ -47,6 +56,13 @@ public static class GetStatusEffect
     {
         if (_initialized) return;
         if (ObjectDB.instance == null) return;
+
+        // Only register status effects if the config is the source of truth
+        if (!Plugin.ConfigSync.IsSourceOfTruth)
+        {
+            _initialized = true;
+            return;
+        }
         
         StatusEffects.Clear();
         

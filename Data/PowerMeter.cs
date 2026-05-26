@@ -109,24 +109,30 @@ public class PowerMeter
         _value += _regenRate * Time.deltaTime;
         _value = Mathf.Clamp(_value, 0f, _maxValue);
 
-        if (!(_value >= _maxValue) || _playedFullSound) return;
+        if (!(_value >= _maxValue)) return;
+
+        if (_playedFullSound) return;
         _playedFullSound = true;
         if (FullSound != null)
         {
             AudioSource.PlayClipAtPoint(FullSound, Player.m_localPlayer.transform.position);
         }
     }
+    
+    public bool IsLosingPower() => _shouldLose;
 
     /// <summary>
     /// Resets the power meter to its starting values
     /// </summary>
     public void ResetValue()
     {
+        SetPower(0);
         _isActive = false;
         _shouldRegen = false;
         _shouldLose = true;
         _playedFullSound = false;
         _regenRate = _baseRegenRate;
+        Plugin.Logger.LogInfo("Resetting power meter");
     }
 
     /// <summary>
