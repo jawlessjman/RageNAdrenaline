@@ -288,7 +288,8 @@ public class Plugin : BaseUnityPlugin
             {
                 AudioSource.PlayClipAtPoint(sound, Player.m_localPlayer.transform.position);
             }
-            Player.m_localPlayer.m_seman.AddStatusEffect(RageMeter.StatusEffect);
+            //Player.m_localPlayer.m_seman.AddStatusEffect(RageMeter.StatusEffect);
+            Player.m_localPlayer.GetSEMan().AddStatusEffect(RageMeter.StatusEffect);
         }
         else if (ZInput.GetButtonDown(_adrenalineButtonConfig.Name))
         {
@@ -309,7 +310,8 @@ public class Plugin : BaseUnityPlugin
             {
                 AudioSource.PlayClipAtPoint(sound, Player.m_localPlayer.transform.position);
             }
-            Player.m_localPlayer.m_seman.AddStatusEffect(AdrenalineMeter.StatusEffect);
+            //Player.m_localPlayer.m_seman.AddStatusEffect(AdrenalineMeter.StatusEffect);
+            Player.m_localPlayer.GetSEMan().AddStatusEffect(AdrenalineMeter.StatusEffect);
         }
     }
     
@@ -567,7 +569,8 @@ public class Plugin : BaseUnityPlugin
         var slowBar = slowObj.GetComponent<GuiBar>();
         var fastBar = fastObj.GetComponent<GuiBar>();
         
-        fastBar.m_barImage.color = barColor;
+        //fastBar.m_barImage.color = barColor;
+        fastBar.SetColor(barColor);
         
         // Set the bar's values.
         // The slow bar is the grey bar that slowly drains as the fast bar drains
@@ -575,14 +578,14 @@ public class Plugin : BaseUnityPlugin
         slowBar.m_smoothDrain = Hud.instance.m_adrenalineBarSlow.m_smoothDrain;
         slowBar.m_smoothFill = Hud.instance.m_adrenalineBarSlow.m_smoothFill;
         slowBar.m_smoothSpeed = Hud.instance.m_adrenalineBarSlow.m_smoothSpeed;
-        slowBar.m_smoothValue = Hud.instance.m_adrenalineBarSlow.m_smoothValue;
+        //slowBar.m_smoothValue = Hud.instance.m_adrenalineBarSlow.m_smoothValue;
         
         // The fast bar is the main bar that drains and fills fast and is the main colour
         fastBar.m_changeDelay = Hud.instance.m_adrenalineBarFast.m_changeDelay;
         fastBar.m_smoothDrain = Hud.instance.m_adrenalineBarFast.m_smoothDrain;
         fastBar.m_smoothFill = Hud.instance.m_adrenalineBarFast.m_smoothFill;
         fastBar.m_smoothSpeed = Hud.instance.m_adrenalineBarFast.m_smoothSpeed;
-        fastBar.m_smoothValue = Hud.instance.m_adrenalineBarFast.m_smoothValue;
+        //fastBar.m_smoothValue = Hud.instance.m_adrenalineBarFast.m_smoothValue;
         
         var slowRect = slowBar.GetComponent<RectTransform>();
         var fastRect = fastBar.GetComponent<RectTransform>();
@@ -601,12 +604,14 @@ public class Plugin : BaseUnityPlugin
         fastRect.sizeDelta = Vector2.zero;
 
         // Set the size of the bars
-        slowBar.m_barImage.rectTransform.sizeDelta =
-            new Vector2(sizeDelta.x, slowBar.m_barImage.rectTransform.sizeDelta.y);
-        fastBar.m_barImage.rectTransform.sizeDelta = new Vector2(sizeDelta.x, fastBar.m_barImage.rectTransform.sizeDelta.y);
+        //slowBar.m_barImage.rectTransform.sizeDelta = new Vector2(sizeDelta.x, slowBar.m_barImage.rectTransform.sizeDelta.y);
+        slowBar.m_bar.sizeDelta = new Vector2(sizeDelta.x, slowBar.m_bar.sizeDelta.y);
+        //fastBar.m_barImage.rectTransform.sizeDelta = new Vector2(sizeDelta.x, fastBar.m_barImage.rectTransform.sizeDelta.y);
+        fastBar.m_bar.sizeDelta = new Vector2(sizeDelta.x, fastBar.m_bar.sizeDelta.y);
         
         // Set the size of the black border
-        borderRect.sizeDelta = new Vector2(fastBar.m_barImage.rectTransform.sizeDelta.x * 1.05f, fastBar.m_barImage.rectTransform.sizeDelta.y * 1.5f);
+        //borderRect.sizeDelta = new Vector2(fastBar.m_barImage.rectTransform.sizeDelta.x * 1.05f, fastBar.m_barImage.rectTransform.sizeDelta.y * 1.5f);
+        borderRect.sizeDelta = new Vector2(fastBar.m_bar.sizeDelta.x * 1.05f, fastBar.m_bar.sizeDelta.y * 1.5f);
         
         // Create the text object for the bar
         var textObj = new GameObject($"{barName}Text", typeof(RectTransform));

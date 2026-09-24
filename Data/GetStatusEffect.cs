@@ -88,7 +88,7 @@ public static class GetStatusEffect
         effect.m_startMessage = $"${seName}_start";
         effect.m_startMessageType = MessageHud.MessageType.Center;
         effect.m_ttl = duration;
-        effect.m_icon = AssetHolder.GetSprite(seName) ?? Hud.instance.m_buildSnappingIcon;
+        effect.m_icon = AssetHolder.GetSprite(seName) ?? Hud.instance.m_buildIcon.sprite;
         effect.m_tooltip = $"${seName}_tooltip";
 
         effect.m_percentigeDamageModifiers.Add(
