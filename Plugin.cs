@@ -75,7 +75,7 @@ public class Plugin : BaseUnityPlugin
     // Plugin Info
     private const string ModGuid = "jawlessjman.RageNAdrenaline";
     public const string ModName = "RageNAdrenaline";
-    private const string ModVersion = "1.1.0";
+    private const string ModVersion = "1.2.0";
     
     // Stored Bars
     private readonly Dictionary<string, GuiBar> _guiBars = new();
@@ -107,7 +107,7 @@ public class Plugin : BaseUnityPlugin
     {
         DisplayName = ModName,
         CurrentVersion = ModVersion,
-        MinimumRequiredVersion = "1.1.0",
+        MinimumRequiredVersion = "1.2.0",
         IsLocked = true
     };
     
